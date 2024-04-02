@@ -1,0 +1,7 @@
+[package]
+name = "make-rules"
+version = "0.0.1"
+description = "Build IC projects using GNU Make, better than direct use of DFX"
+repository = "https://github.com/vporton/icp-make-rules"
+keywords = [ "make", "GNU make", "Makefile", "DFX", "build", "building" ]
+license = "Apache-2.0"
