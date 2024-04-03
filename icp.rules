@@ -33,7 +33,7 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 %.install: %.wasm FORCE
 	dfx canister create --network=$(NETWORK) --identity=$(IDENTITY) $(DFXCREATEFLAGS) $(DFXCREATEFLAGS_$*) $(*F)
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
-	env -i $(ICPRULESDIR)/store-canister.sh $* `dfx canister id $*`
+	env -i $(ICPRULESDIR)/store-canister.sh $(*F) `dfx canister id $(*F)`
 
 %.upgrade: %.wasm %.most FORCE
 	TMPDIR=`mktemp -d` && \
