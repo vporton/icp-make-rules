@@ -6,8 +6,6 @@ MOFLAGS =
 DFXCREATEFLAGS =
 DFXINSTALLFLAGS =
 
-ICPRULESDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-
 .PHONY: FORCE
 FORCE:
 
@@ -33,13 +31,13 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 %.install: %.wasm FORCE
 	dfx canister create --network=$(NETWORK) --identity=$(IDENTITY) $(DFXCREATEFLAGS) $(DFXCREATEFLAGS_$*) $(*F)
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
-	env -i $(ICPRULESDIR)/store-canister.sh $(*F) `dfx canister id $(*F)`
+	$(ICPRULESDIR)/store-canister.py $(*F) `dfx canister id $(*F)`
 
 %.upgrade: %.wasm %.most FORCE
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
 	  dfx canister metadata stresser motoko:stable-types > $$TMPDIR/interface.most && \
-	  echo
+	  echo && \
 	  { \
 	    moc --stable-compatible $$TMPDIR/interface.most $*.most || \
 	    { echo "\nWARNING!\nStable interface compatibility check failed for canister '$(*F)'.\nUpgrade will either FAIL or LOSE some stable variable data.\n"; \
