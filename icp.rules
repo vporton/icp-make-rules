@@ -36,7 +36,7 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 %.upgrade: %.wasm %.most FORCE
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
-	  dfx canister metadata stresser motoko:stable-types > $$TMPDIR/interface.most && \
+	  dfx canister metadata $(*F) motoko:stable-types > $$TMPDIR/interface.most && \
 	  echo && \
 	  { \
 	    moc --stable-compatible $$TMPDIR/interface.most $*.most || \
