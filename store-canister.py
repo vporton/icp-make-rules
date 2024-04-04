@@ -5,7 +5,7 @@ import sys
 from collections import OrderedDict
 import shlex
 
-envre = re.compile(r'''^([^=]+)\s+?=\s+?(?:[\s"']*)(.+?)(?:[\s"']*)$''')
+envre = re.compile(r'''^([^=]+)\s*?=\s*?(.*)$''')
 result = OrderedDict()
 try:
     with open(".env") as ins:
@@ -18,8 +18,8 @@ except FileNotFoundError:
 
 c = sys.argv[1].upper()
 v = sys.argv[2]
-result[f"CANISTER_ID_{c}"] = v
+result[f"CANISTER_ID_{c}"] = shlex.quote(v)
 
 with open(".env", 'w') as out:
     for k, v in result.items():
-        out.write(f"{k}={shlex.quote(v)}\n")
+        out.write(f"{k}={v}\n")
