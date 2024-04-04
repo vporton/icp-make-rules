@@ -11,8 +11,34 @@ mops add make-rules
 ```
 
 ## Usage
-In `Makefile`
+In `Makefile` after installing this into directory `icp-make-rules`
+(for example, as a Git submodule, what is recommended):
 
 ```make
-include .mops/make-rules/icp.rules
+ICPRULESDIR = icp-make-rules
+include $(ICPRULESDIR)/icp.rules
+
+# If missing, points to `out` by default
+# DESTDIR = out
+
+# Optional additional settings:
+NETWORK = local
+IDENTITY = default
+MOFLAGS =
+DFXCREATEFLAGS =
+DFXINSTALLFLAGS =
+
+# List of all your `.mo` files:
+MOFILES = \
+  src/FILE1.mo \
+  src/FILE2.mo
+```
+
+Now, to compile `FILE1.mo`, you issue
+```
+make out/src/FILE1.wasm
+```
+and to deploy it to the blockchain,
+```
+make out/src/FILE1.deploy
 ```
