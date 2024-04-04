@@ -10,7 +10,7 @@ DFXINSTALLFLAGS =
 FORCE:
 
 # .wasm compilation is slow.
-.PRECIOUS: %.wasm
+.PRECIOUS: $(DESTDIR)/%.wasm
 
 .PHONY: deps
 deps: $(DESTDIR)/.deps
@@ -23,7 +23,17 @@ $(DESTDIR)/.deps: $(MOFILES)
 
 $(DESTDIR)/%.wasm $(DESTDIR)/%.did $(DESTDIR)/%.most: %.mo
 	mkdir -p $(dir $@)
-	moc $(MOFLAGS) --idl --stable-types `mops sources` -o $@ $<
+	TMPDIR=`mktemp -d` && \
+	  trap 'rm -rf $$TMPDIR' EXIT && \
+	  cans=$$(find $(DESTDIR) -name "*.deploy" -printf '%f\n' | sed 's@\.deploy$$@@' | \
+	  while read REPLY; do \
+	    principal=`dfx canister id $$REPLY` && \
+		if test $$principal; then \
+		  dfx canister metadata $$REPLY candid:service > $$TMPDIR/$$principal.did && \
+	      echo --actor-idl $$TMPDIR --actor-alias\ $$REPLY\ $$principal; \
+		fi; \
+	  done); \
+	  moc $(MOFLAGS) $$cans --idl --stable-types `mops sources` -o $@ $<
 
 $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 	didc bind -t ts $< > $@
@@ -45,11 +55,12 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 	  }
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
 
-%.deploy: FORCE
+%.deploy:
 	if dfx canister id $(*F) 2>/dev/null; then \
 	  $(MAKE) $*.upgrade; \
 	else \
 	  $(MAKE) $*.install; \
 	fi
+	touch $@
 
 -include $(DESTDIR)/.deps
