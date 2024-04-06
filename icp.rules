@@ -10,7 +10,7 @@ DFXINSTALLFLAGS =
 FORCE:
 
 # .wasm compilation is slow.
-.PRECIOUS: $(DESTDIR)/%.wasm
+.PRECIOUS: $(DESTDIR)/%.wasm $(DESTDIR)/%.deploy
 
 .PHONY: deps
 deps: $(DESTDIR)/.deps
@@ -21,11 +21,12 @@ $(DESTDIR)/.deps: $(MOFILES)
 	  { echo -n "$$i: "; moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
 	done
 
+# TODO: `target` here is a hack.
 $(DESTDIR)/%.wasm $(DESTDIR)/%.did $(DESTDIR)/%.most: %.mo
 	mkdir -p $(dir $@)
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
-	  cans=$$(find $(DESTDIR) -name "*.deploy" -printf '%f\n' | sed 's@\.deploy$$@@' | \
+	  cans=$$(find $(DESTDIR) target -name "*.deploy" -printf '%f\n' | sed 's@\.deploy$$@@' | \
 	  while read REPLY; do \
 	    principal=`dfx canister id $$REPLY` && \
 		if test $$principal; then \
