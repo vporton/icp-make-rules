@@ -16,6 +16,7 @@ FORCE:
 deps: $(DESTDIR)/.deps
 
 $(DESTDIR)/.deps: $(MOFILES)
+	mkdir -p $(DESTDIR)
 	echo -n > $(DESTDIR)/.deps
 	for i in $(MOFILES); do \
 	  { echo -n "$$i: "; moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
