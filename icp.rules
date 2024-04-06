@@ -35,7 +35,10 @@ $(DESTDIR)/%.wasm $(DESTDIR)/%.did $(DESTDIR)/%.most: %.mo
 	  done); \
 	  moc $(MOFLAGS) $$cans --idl --stable-types `mops sources` -o $@ $<
 
-$(DESTDIR)/%.ts: $(DESTDIR)/%.did
+$(DESTDIR)/%.js: $(DESTDIR)/%.did
+	didc bind -t js $< > $@
+
+$(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	didc bind -t ts $< > $@
 
 %.install: %.wasm FORCE
@@ -66,6 +69,12 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 $(DESTDIR)/assetstorage.wasm.gz:
 	curl https://raw.githubusercontent.com/dfinity/sdk/master/src/distributed/assetstorage.wasm.gz | gunzip > $@
 
+$(DESTDIR)/internet_identity.wasm.gz:
+	curl -L -o$@ https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz
+
+$(DESTDIR)/internet_identity.did:
+	curl -L -o$@ https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did
+
 .PHONY: $(DESTDIR)/frontend.deploy
 $(DESTDIR)/frontend.deploy: $(DESTDIR)/assetstorage.wasm.gz
 	if dfx canister id frontend 2>/dev/null; then \
@@ -74,6 +83,18 @@ $(DESTDIR)/frontend.deploy: $(DESTDIR)/assetstorage.wasm.gz
 	  dfx canister create frontend; \
 	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< frontend; \
 	fi
+	$(ICPRULESDIR)/store-canister.py frontend `dfx canister id frontend`
+	touch $@
+
+.PHONY: $(DESTDIR)/internet_identity.deploy
+$(DESTDIR)/internet_identity.deploy: $(DESTDIR)/internet_identity.wasm.gz
+	if dfx canister id internet_identity 2>/dev/null; then \
+	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< internet_identity; \
+	else \
+	  dfx canister create internet_identity; \
+	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< internet_identity; \
+	fi
+	$(ICPRULESDIR)/store-canister.py internet_identity `dfx canister id internet_identity`
 	touch $@
 
 -include $(DESTDIR)/.deps
