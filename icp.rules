@@ -63,4 +63,17 @@ $(DESTDIR)/%.ts: $(DESTDIR)/%.did
 	fi
 	touch $@
 
+$(DESTDIR)/assetstorage.wasm.gz:
+	curl https://raw.githubusercontent.com/dfinity/sdk/master/src/distributed/assetstorage.wasm.gz | gunzip > $@
+
+.PHONY: $(DESTDIR)/frontend.deploy
+$(DESTDIR)/frontend.deploy: $(DESTDIR)/assetstorage.wasm.gz
+	if dfx canister id frontend 2>/dev/null; then \
+	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< frontend; \
+	else \
+	  dfx canister create frontend; \
+	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< frontend; \
+	fi
+	touch $@
+
 -include $(DESTDIR)/.deps
