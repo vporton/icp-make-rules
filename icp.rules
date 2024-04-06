@@ -46,7 +46,24 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
 	$(ICPRULESDIR)/store-canister.py $(*F) `dfx canister id $(*F)`
 
+%.install: %.wasm.gz FORCE
+	dfx canister create --network=$(NETWORK) --identity=$(IDENTITY) $(DFXCREATEFLAGS) $(DFXCREATEFLAGS_$*) $(*F)
+	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
+	$(ICPRULESDIR)/store-canister.py $(*F) `dfx canister id $(*F)`
+
 %.upgrade: %.wasm %.most FORCE
+	TMPDIR=`mktemp -d` && \
+	  trap 'rm -rf $$TMPDIR' EXIT && \
+	  dfx canister metadata $(*F) motoko:stable-types > $$TMPDIR/interface.most && \
+	  echo && \
+	  { \
+	    moc --stable-compatible $$TMPDIR/interface.most $*.most || \
+	    { echo "\nWARNING!\nStable interface compatibility check failed for canister '$(*F)'.\nUpgrade will either FAIL or LOSE some stable variable data.\n"; \
+		  read -r -p "Do you want to proceed? (yes/No) " REPLY; test "$$REPLY" = yes; }; \
+	  }
+	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
+
+%.upgrade: %.wasm.gz %.most FORCE
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
 	  dfx canister metadata $(*F) motoko:stable-types > $$TMPDIR/interface.most && \
@@ -74,27 +91,5 @@ $(DESTDIR)/internet_identity.wasm.gz:
 
 $(DESTDIR)/internet_identity.did:
 	curl -L -o$@ https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did
-
-.PHONY: $(DESTDIR)/frontend.deploy
-$(DESTDIR)/frontend.deploy: $(DESTDIR)/assetstorage.wasm.gz
-	if dfx canister id frontend 2>/dev/null; then \
-	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< frontend; \
-	else \
-	  dfx canister create frontend; \
-	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< frontend; \
-	fi
-	$(ICPRULESDIR)/store-canister.py frontend `dfx canister id frontend`
-	touch $@
-
-.PHONY: $(DESTDIR)/internet_identity.deploy
-$(DESTDIR)/internet_identity.deploy: $(DESTDIR)/internet_identity.wasm.gz
-	if dfx canister id internet_identity 2>/dev/null; then \
-	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< internet_identity; \
-	else \
-	  dfx canister create internet_identity; \
-	  dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< internet_identity; \
-	fi
-	$(ICPRULESDIR)/store-canister.py internet_identity `dfx canister id internet_identity`
-	touch $@
 
 -include $(DESTDIR)/.deps
