@@ -10,7 +10,7 @@ DFXINSTALLFLAGS =
 FORCE:
 
 # .wasm compilation is slow.
-.PRECIOUS: $(DESTDIR)/%.wasm $(DESTDIR)/%.deploy
+.PRECIOUS: $(DESTDIR)/%.wasm $(DESTDIR)/%.wasm.gz $(DESTDIR)/%.deploy
 
 .PHONY: deps
 deps: $(DESTDIR)/.deps
