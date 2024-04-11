@@ -87,6 +87,8 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	fi
 	touch $@
 
+$(DESTDIR)/assetstorage.deploy: FORCE
+
 $(DESTDIR)/assetstorage.upgrade: $(DESTDIR)/assetstorage.wasm.gz FORCE
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< assetstorage
 
