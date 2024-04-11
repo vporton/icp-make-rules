@@ -55,7 +55,7 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
 	$(ICPRULESDIR)/store-canister.py $(*F) `dfx canister id $(*F)`
 
-%.upgrade: %.wasm %.most FORCE
+%.upgrade: %.wasm FORCE
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
 	  dfx canister metadata $(*F) motoko:stable-types > $$TMPDIR/interface.most && \
@@ -67,7 +67,7 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	  }
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
 
-%.upgrade: %.wasm.gz %.most FORCE
+%.upgrade: %.wasm.gz FORCE
 	TMPDIR=`mktemp -d` && \
 	  trap 'rm -rf $$TMPDIR' EXIT && \
 	  dfx canister metadata $(*F) motoko:stable-types > $$TMPDIR/interface.most && \
@@ -86,6 +86,9 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	  $(MAKE) $*.install; \
 	fi
 	touch $@
+
+$(DESTDIR)/assetstorage.upgrade: $(DESTDIR)/assetstorage.wasm.gz FORCE
+	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< assetstorage
 
 $(DESTDIR)/assetstorage.wasm.gz:
 	-dfx canister create assetstorage # hack
