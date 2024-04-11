@@ -19,7 +19,7 @@ $(DESTDIR)/.deps: $(MOFILES)
 	mkdir -p $(DESTDIR)
 	echo -n > $(DESTDIR)/.deps
 	for i in $(MOFILES); do \
-	  { echo -n "$$i: "; moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
+	  { echo -n "$(DESTDIR)/$$i" | sed -e 's/\.mo$$/\.wasm/' && echo -n ": " && moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
 	done
 
 # TODO: `target` here is a hack.
