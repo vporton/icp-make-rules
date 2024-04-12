@@ -19,7 +19,7 @@ $(DESTDIR)/.deps: $(MOFILES)
 	mkdir -p $(DESTDIR)
 	echo -n > $(DESTDIR)/.deps
 	for i in $(MOFILES); do \
-	  { echo -n "$(DESTDIR)/$$i" | sed -e 's/\.mo$$/\.wasm/' && echo -n ": " && moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
+	  { echo -n "$(DESTDIR)/$$i" | sed -e 's/\.mo$$/\.wasm/' && echo -n ": $$i " && moc --print-deps $$i | awk 'BEGIN {ORS = " "} !/^mo:/ {print $$2}'; echo; } >> $(DESTDIR)/.deps; \
 	done
 
 # TODO: `target` here is a hack.
@@ -79,7 +79,7 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 	  }
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< $(*F)
 
-%.deploy:
+%.deploy: FORCE
 	if dfx canister id $(*F) 2>/dev/null; then \
 	  $(MAKE) $*.upgrade; \
 	else \
