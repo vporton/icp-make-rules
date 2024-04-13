@@ -40,6 +40,9 @@ $(DESTDIR)/%.wasm $(DESTDIR)/%.did $(DESTDIR)/%.most: %.mo
 	-dfx canister create --network=$(NETWORK) --identity=$(IDENTITY) $(DFXCREATEFLAGS) $(DFXCREATEFLAGS_$*) $(*F)
 	mkdir -p .dfx/$(NETWORK)/lsp
 	cp -f $(DESTDIR)/$*.did .dfx/$(NETWORK)/lsp/`dfx canister id $(*F)`.did
+	# DFX 0.19.0:
+	mkdir -p .dfx/$(NETWORK)/canisters/$(*F)
+	cp -f $(DESTDIR)/$*.did .dfx/$(NETWORK)/canisters/$(*F)/$(*F).did
 
 $(DESTDIR)/%.js: $(DESTDIR)/%.did
 	didc bind -t js $< > $@
@@ -97,11 +100,14 @@ $(DESTDIR)/%.d.ts: $(DESTDIR)/%.did
 
 $(DESTDIR)/assetstorage.deploy: FORCE
 
+$(DESTDIR)/assetstorage.install: $(DESTDIR)/assetstorage.wasm.gz FORCE
+	dfx canister create assetstorage
+	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m install -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< assetstorage
+
 $(DESTDIR)/assetstorage.upgrade: $(DESTDIR)/assetstorage.wasm.gz FORCE
 	dfx canister install --network=$(NETWORK) --identity=$(IDENTITY) -m upgrade -y $(DFXINSTALLFLAGS) $(DFXINSTALLFLAGS_$*) --wasm=$< assetstorage
 
 $(DESTDIR)/assetstorage.wasm.gz:
-	-dfx canister create assetstorage # hack
 	curl -L -o$@ https://raw.githubusercontent.com/dfinity/sdk/master/src/distributed/assetstorage.wasm.gz
 
 $(DESTDIR)/internet_identity.wasm.gz:
